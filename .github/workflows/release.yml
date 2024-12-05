@@ -3,8 +3,7 @@
 on:
   release:
     types: [created, edited]
-  label:
-    types: [created, edited, deleted]
+  workflow_dispatch:
 
 permissions:
     contents: write
