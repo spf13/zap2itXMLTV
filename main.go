@@ -21,12 +21,13 @@ import (
 )
 
 const (
-	defaultTimeout     = 30 * time.Second
-	defaultHistoryDays = 14
-	defaultLanguage    = "en-us"
-	zap2itLoginURL     = "https://tvlistings.zap2it.com/api/user/login"
-	zap2itGridURL      = "https://tvlistings.zap2it.com/api/grid"
-	zap2itProvidersURL = "https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders"
+	defaultTimeout        = 30 * time.Second
+	defaultHistoryDays    = 14
+	defaultLanguage       = "en-us"
+	defaultDaemonInterval = 7 * 24 * time.Hour // 7 days
+	zap2itLoginURL        = "https://tvlistings.zap2it.com/api/user/login"
+	zap2itGridURL         = "https://tvlistings.zap2it.com/api/grid"
+	zap2itProvidersURL    = "https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders"
 
 	// Time constants
 	hoursInDay        = 24
@@ -524,16 +525,47 @@ func (g *Guide) cleanHistoricalFiles() error {
 	return nil
 }
 
+// runDaemon runs the guide update process in daemon mode
+func (g *Guide) runDaemon(ctx context.Context, interval time.Duration) error {
+	log.Printf("Starting daemon mode with update interval of %v", interval)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	// Run immediately on startup
+	if err := g.BuildGuide(ctx); err != nil {
+		log.Printf("Error building guide: %v", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			log.Printf("Running scheduled guide update")
+			if err := g.BuildGuide(ctx); err != nil {
+				log.Printf("Error building guide: %v", err)
+				continue
+			}
+			log.Printf("Guide update completed successfully")
+		}
+	}
+}
+
 func main() {
 	var (
 		configFile string
 		outputFile string
 		findID     bool
+		daemon     bool
+		interval   int
 	)
 
 	pflag.StringVarP(&configFile, "configfile", "c", "./zap2itconfig.ini", "Path to config file")
 	pflag.StringVarP(&outputFile, "outputfile", "o", "xmlguide.xmltv", "Path to output file")
 	pflag.BoolVarP(&findID, "findid", "f", false, "Find Headendid / lineupid")
+	pflag.BoolVarP(&daemon, "daemon", "d", false, "Run in daemon mode")
+	pflag.IntVarP(&interval, "interval", "i", 7, "Update interval in days (only used with daemon mode)")
 	pflag.Parse()
 
 	guide, err := NewGuide(configFile, outputFile)
@@ -549,7 +581,15 @@ func main() {
 	}
 
 	ctx := context.Background()
-	if err := guide.BuildGuide(ctx); err != nil {
-		log.Fatalf("Failed to build guide: %v", err)
+
+	if daemon {
+		updateInterval := time.Duration(interval) * 24 * time.Hour
+		if err := guide.runDaemon(ctx, updateInterval); err != nil {
+			log.Fatalf("Daemon mode failed: %v", err)
+		}
+	} else {
+		if err := guide.BuildGuide(ctx); err != nil {
+			log.Fatalf("Failed to build guide: %v", err)
+		}
 	}
 }
