@@ -3,6 +3,8 @@
 on:
   release:
     types: [created, edited]
+  label:
+    types: [created, edited, deleted]
 
 permissions:
     contents: write
