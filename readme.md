@@ -58,14 +58,12 @@ device: -
 ```
 
 ### Obtaining Zap2It Configuration Information
-To use this script, you'll need a Zap2It account and your headendID and lineupID. Here's how to get them:
+To use this script, you'll need a Zap2It account, your headendID, lineupID and device. Here's how to get them:
 
 
 1. Sign up for a free account at [Zap2It](https://tvschedule.zap2it.com/).
-2. Log in and get your zapToken and headendID from the network requests or API calls made by the Zap2It website.
-3. Find your lineupID by going to the Zap2It website and searching for your location. The lineupID is in the URL.
-
-You can also use the `-f` option to find your headendID and lineupID.
+2. Add your username, password, and zipCode to the configuration file.
+3. Run the script with the `-f` option to find your headendID and lineupID.
 
 
 ## License
