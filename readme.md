@@ -2,12 +2,14 @@
 This script converts TV listings from [Zap2It](https://tvschedule.zap2it.com/) into the XMLTV format, which can be used with media applications like [Jellyfin](https://jellyfin.org/) and [Emby](https://emby.media/).
 
 It is written in Go and can be run on Windows, macOS, and Linux without any dependencies.
+It can be run as a daemon to automatically update the listings every X days.
 
 ## Features
 
 - Fetch TV listings from Zap2It.
 - Convert listings to XMLTV format.
 - Customize output with configuration.
+- Run as a daemon to automatically update listings.
 
 ## Installation
 Download the release for your platform from the releases page.
@@ -24,6 +26,12 @@ go build -o zap2itxmltv
 ```bash
 ./zap2itxmltv [options]
 ```
+Either put it in a cron job or just use -d to run it as a daemon.
+
+Example to update every 5 days:
+```bash 
+./zap2itxmltv -d -i 5 -o tvschedule/guide.xmltv
+```
 
 ### Options
  * `-c, --configfile`
@@ -37,6 +45,12 @@ go build -o zap2itxmltv
 
 *  `-f, --findid`
    Find headendID and lineupID for your region.
+
+*  `-d, --daemon`
+   Run the script as a daemon. Fetches listings every X days (default: 7).
+
+*  `-i, --interval`
+   Interval in days to fetch listings when running as a daemon. Default: 7
 
 ## Configuration
 
